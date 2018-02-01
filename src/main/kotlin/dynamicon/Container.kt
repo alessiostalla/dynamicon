@@ -16,10 +16,9 @@ class Container {
 
     fun <T : Any> insert(obj : T, vararg names : String) : T {
         val managedObjects = ensureManagedObjects(obj.javaClass as Class<in Any>)
-        val managedObject = ManagedObject(obj)
-        managedObjects.objects.add(managedObject)
+        managedObjects.objects.add(obj)
         managedObjects.others.forEach {
-            it.objects.add(managedObject)
+            it.objects.add(obj)
         }
         return obj
     }
@@ -27,7 +26,7 @@ class Container {
     fun <T : Any> get(type : Class<in T>) : T? {
         val results = byClass[type]
         if(results != null && !results.objects.isEmpty()) {
-            return results.objects[0].obj as T
+            return results.objects[0] as T
         }
         return null
     }
@@ -67,6 +66,21 @@ class Container {
         return insert(create(type), *names)
     }
 
+    fun remove(obj: Any) : Boolean {
+        val results = byClass[obj.javaClass]
+        if(results != null) {
+            //TODO GC?
+            val removed = results.objects.remove(obj)
+            if(removed) {
+                results.others.forEach {
+                    it.objects.remove(obj)
+                }
+            }
+            return removed
+        }
+        return false
+    }
+
     protected fun ensureManagedObjects(javaClass: Class<in Any>): ManagedObjects {
         var managedObjects = byClass[javaClass]
         if (managedObjects == null) {
@@ -91,12 +105,6 @@ class Container {
 class ManagedObjects {
 
     val others  : MutableSet<ManagedObjects> = HashSet()
-    val objects : MutableList<ManagedObject> = ArrayList()
-
-}
-
-class ManagedObject(obj : Any) {
-
-    val obj = obj
+    val objects : MutableList<Any> = ArrayList()
 
 }

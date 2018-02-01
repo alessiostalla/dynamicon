@@ -67,6 +67,18 @@ class ContainerTests : StringSpec({
         bean3.b2 shouldBe bean2
     }
 
+    "Object removal" {
+        val container = Container()
+        val arrayList = container.insert(ArrayList<Any>())
+
+        container.remove(arrayList) shouldBe true
+        container.remove(arrayList) shouldBe false
+
+        container.get(ArrayList::class.java) shouldBe null
+        container.get(List::class.java) shouldBe null
+        container.get(Object::class.java) shouldBe null
+    }
+
 })
 
 class Bean1 {
