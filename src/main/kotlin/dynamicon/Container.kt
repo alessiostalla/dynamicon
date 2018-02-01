@@ -1,5 +1,13 @@
 package dynamicon
 
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.full.memberExtensionProperties
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaType
+import kotlin.reflect.jvm.jvmErasure
+
 class Container {
 
     protected val byClass : MutableMap<Class<in Any>, ManagedObjects> = HashMap()
@@ -24,6 +32,18 @@ class Container {
     }
 
     //fun <T : Any> getAll(type : Class<in Any>) : List<T> {}
+
+    fun <T : Any> inject(obj : T) : T {
+        obj.javaClass.kotlin.memberProperties.forEach {
+            if(it is KMutableProperty1) {
+                val dependency : Any? = get(it.returnType.jvmErasure.java)
+                if(dependency != null) {
+                    it.setter.call(obj, dependency)
+                }
+            }
+        }
+        return obj
+    }
 
     protected fun ensureManagedObjects(javaClass: Class<in Any>): ManagedObjects {
         var managedObjects = byClass[javaClass]
