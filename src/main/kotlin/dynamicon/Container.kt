@@ -1,5 +1,6 @@
 package dynamicon
 
+import java.lang.reflect.Constructor
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KMutableProperty1
@@ -43,6 +44,27 @@ class Container {
             }
         }
         return obj
+    }
+
+    fun <T : Any> injectAndInsert(obj : T, vararg names : String) : T {
+        return insert(inject(obj), *names)
+    }
+
+    fun <T : Any> create(type : Class<T>) : T {
+        type.constructors.sortedByDescending { it.parameterCount }.forEach {
+            val arguments = ArrayList<Any?>()
+            it.parameterTypes.forEach {
+                arguments.add(get(it))
+            }
+            if(!arguments.contains(null)) {
+                return inject(it.newInstance(*arguments.toArray()) as T)
+            }
+        }
+        throw InstantiationException()
+    }
+
+    fun <T : Any> createAndInsert(type : Class<T>, vararg names : String) : T {
+        return insert(create(type), *names)
     }
 
     protected fun ensureManagedObjects(javaClass: Class<in Any>): ManagedObjects {
